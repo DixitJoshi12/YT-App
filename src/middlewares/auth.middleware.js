@@ -1,7 +1,7 @@
-import { ApiError } from "../utils/apiError";
+import { ApiError } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.model";
+import { User } from "../models/user.model.js";
 
 
 
@@ -13,7 +13,7 @@ try {
             throw new ApiError(401,"Unauthorized!");
         }
         // now check if the token is valid or not
-       const validAccessToken =  jwt.compare(accessToken,process.env.ACCESS_TOKEN_SECRET);
+       const validAccessToken = await jwt.compare(accessToken,process.env.ACCESS_TOKEN_SECRET);
        const user = await User.findById(validAccessToken?._id).select("-password -refreshToken");
        if(!user){
         throw new ApiError(401,"Invalid Access Token");
@@ -26,4 +26,4 @@ try {
 
 });
 
-export const validateJWT = {jwtValidator}
+export {jwtValidator}

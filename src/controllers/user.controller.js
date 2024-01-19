@@ -82,7 +82,7 @@ const loginUser = asyncHandler(async (req, res) => {
     // get the username or email and password
     const { email, userName, password } = req.body;
     // check for empty values
-    if (!userName || !email) {
+    if (!(!userName || !email)) {
         throw new ApiError(400, "userName or email is required!");
     }
     // check in db if information is same or not 
@@ -108,7 +108,6 @@ const loginUser = asyncHandler(async (req, res) => {
         httpOnly: true,
         secure: true
     }
-
     return res.status(200)
         .cookie("accessToken ", accessToken,options)
         .cookie("refreshToken", refreshToken,options)
@@ -118,8 +117,7 @@ const loginUser = asyncHandler(async (req, res) => {
                     user: loggedInUser,
                     accessToken,
                     refreshToken
-                }),
-            "User Logged In Successfully"
+                },"User Logged In Successfully"),  
         )
 })
 
@@ -151,3 +149,5 @@ export {
         loginUser,
         loggedOutUser
     }
+
+   
