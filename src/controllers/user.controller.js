@@ -247,6 +247,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         if (!newUser) {
             throw new ApiError(401, "User not found")
         }
+        // utility function to delete old avatar from cloudinary
         return res.status(200)
             .json(
                 new ApiResponse(200, newUser, "Avatar changed successfuly")
@@ -278,12 +279,86 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         if (!newUser) {
             throw new ApiError(401, "User not found")
         }
+
+        // utility function to delete old coverImage
         return res.status(200)
             .json(
                 new ApiResponse(200, newUser, "Cover Image changed successfuly")
             )
     } catch (error) {
         throw new ApiError(400, err.message || "Cover Image not found")
+    }
+})
+const getUserChannelProfile = asyncHandler(async(res,res)=>{
+    try {
+        const {userName} = req.params;
+        if(!userName?.trime()){
+            throw new ApiError(400,"user name is missing");
+        }
+       const channel =  await User.aggregate([
+            {
+                $match : {
+                    userName : userName?.toLowerCase()
+                },
+            },
+            {
+                $lookup : {
+                    from : "subscriptions",
+                    localField : "_id",
+                    foreignField :  "channel",
+                    as : "subscribers"
+                },
+            },
+            {
+                $lookup : {
+                    from : "subscriptions",
+                    localField : "_id",
+                    foreignField :  "subscriber",
+                    as : "subscribeTo"
+                },
+            },
+            {
+                $addFields : {
+                    subscribersCount : {
+                        $size : "$subscribers"
+                    },
+                    channelSubscriberToCount : {
+                        $size : "$subscribeTo"
+                    },
+                    isSubscribed : {
+                        $condition : {
+                            // in will check in both array and objects
+                            if : {$in : [req.user?._id,"$subscribers.subscriber"]},
+                            then : true,
+                            else : false
+                        }
+                    }
+                }
+            },
+            {
+                $project : {
+                    fullName : 1,
+                    userName : 1,
+                    subscribersCount: 1,
+                    channelSubscriberToCount : 1,
+                    email : 1,
+                    isSubscribed : 1,
+                    avatar:1,
+                    coverImage : 1
+                }
+            }
+        ]);
+        // check what datatype does aggregate return
+        console.log(channel);
+        if(!channel?.length){
+            throw new ApiError(404,"Channel does,'t exist");
+        }
+        return res.status(200)
+                .json(
+                    new ApiResponse(200,channel[0],"user channel fetched successfuly")
+                )
+    } catch (error) {
+        
     }
 })
 export {
@@ -295,6 +370,7 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile
 }
 
