@@ -148,7 +148,7 @@ const logOutUser = asyncHandler(async (req, res) => {
 })
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const incomingRefreshToken = req.cookies.refreshAccessToken || req.body.refreshAccessToken;
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
     if (!incomingRefreshToken) {
         throw new ApiError(401, "Unauthorized request");
     }
@@ -165,14 +165,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             httpOnly: true,
             secure: true
         }
-        const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
+        const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
         return res.status(200)
             .cookie('accessToken', accessToken, options)
             .cookie('refreshToken', newRefreshToken, options)
             .json(
                 new ApiResponse(
                     200,
-                    { accessToken: accessToken, refreshToken: newRefreshToken },
+                    { accessToken: accessToken, refreshToken :newRefreshToken},
                     "Access token is refreshed"
                 )
             )
@@ -291,7 +291,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     }
 })
 // aggregation pipeline 1
-const getUserChannelProfile = asyncHandler(async(res,res)=>{
+const getUserChannelProfile = asyncHandler(async(req,res)=>{
     try {
         const {userName} = req.params;
         if(!userName?.trime()){
