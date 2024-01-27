@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async (userID) => {
     try {
@@ -289,6 +290,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         throw new ApiError(400, err.message || "Cover Image not found")
     }
 })
+// aggregation pipeline 1
 const getUserChannelProfile = asyncHandler(async(res,res)=>{
     try {
         const {userName} = req.params;
@@ -361,6 +363,59 @@ const getUserChannelProfile = asyncHandler(async(res,res)=>{
         
     }
 })
+// aggregation pipeline 2
+const getWatchHistory = asyncHandler(async(req,res)=>{
+    const user = await User.aggregate([
+        {
+            $match : {
+                // In aggregation pipeline we should convert the id into mongo object id
+                _id : new mongoose.Types.ObjectId(req.user._id)
+            },
+        },
+        {
+            $lookup : {
+                from : "videos",
+                localField : "watchHistory",
+                foreignField : "_id",
+                as : "watchHistory",
+                // pipeline inside pipeline
+                pipeline : [
+                    {
+                        $lookup : {
+                            from : "users",
+                            localField : "owner",
+                            foreignField : "_id",
+                            as : "owner",
+                            pipeline : [
+                                {
+                                    $project : {
+                                        fullName : 1,
+                                        email : 1,
+                                        userName : 1,
+                                        avatar : 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        // this pipeline will structure the array
+                        $addFields : {
+                            // can give any name instead owner
+                            owner : {
+                                $first : "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]);
+    res.status(200).json(
+        new ApiResponse(200,user[0].watchHistory,"Watched history fetched successfully")
+    )
+})
+
 export {
     registerUser,
     loginUser,
@@ -371,6 +426,7 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory
 }
 
