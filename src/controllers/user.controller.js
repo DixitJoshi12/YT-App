@@ -23,6 +23,7 @@ const generateAccessAndRefreshTokens = async (userID) => {
 
 const registerUser = asyncHandler(async (req, res) => {
     // get data from frontend
+    console.log("hello1")
     const { fullName, email, userName, password } = req.body;
     console.log("email : ", email);
     // validates for empty values
@@ -31,6 +32,8 @@ const registerUser = asyncHandler(async (req, res) => {
             item.trim() === "")) {
         throw new ApiError(400, "All fields are required!");
     }
+
+    console.log("hello1")
 
     // check for user already existed or not
     const existedUser = await User.findOne({
