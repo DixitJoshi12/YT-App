@@ -81,25 +81,30 @@ const updateTweet = asyncHandler(async (req, res) => {
 })
 
 const deleteTweet = asyncHandler(async (req, res) => {
-    const { tweetId } = req.params;
-    const userId = new mongoose.Types.ObjectId(req.user._id).toString();
-
-    if (!tweetId) {
-        throw new ApiError(400, "tweetId not found")
-    }
-    const delTweet = await Tweet.deleteOne(
-        {
-            _id: tweetId,
-            owner: userId
-        },
-    );
-    if (delTweet.deletedCount === 0) {
-        throw new ApiError(400, "Unauthorized.");
-    }
-    res.status(200)
-        .json(
-            new ApiResponse(200, delTweet, "tweet deleted")
-        )
+    // check againg
+try {
+        const { tweetId } = req.params;
+        const userId = new mongoose.Types.ObjectId(req.user._id).toString();
+    
+        if (!tweetId) {
+            throw new ApiError(400, "tweetId not found")
+        }
+        const delTweet = await Tweet.deleteOne(
+            {
+                _id: tweetId,
+                owner: userId
+            },
+        );
+        if (delTweet.deletedCount === 0) {
+            throw new ApiError(400, "Unauthorized.");
+        }
+        res.status(200)
+            .json(
+                new ApiResponse(200, delTweet, "tweet deleted")
+            )
+} catch (error) {
+    throw new ApiError(400, error?.message ||"Unauthorized.");
+}
 
 })
 
