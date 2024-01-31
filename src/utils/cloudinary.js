@@ -26,4 +26,11 @@ async function uploadOnCloudinary(localFilePath){
     }
 }
 
-export {uploadOnCloudinary};
+async function deleteOnCloudinary(fileUrl,resourceType) {
+ // no delete by url in cloudinary only by public_id which we haven't stored so leaving this now
+    cloudinary.uploader
+    .destroy('http://res.cloudinary.com/dg6i6zqcw/video/upload/v1706724516/x4qgnj1q6d2fseuaeqo5.mp4', {resource_type: 'video'})
+    .then(result => console.log(result));
+  }
+  
+export {uploadOnCloudinary,deleteOnCloudinary};
