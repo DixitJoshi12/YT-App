@@ -60,7 +60,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
 })
 
 const getVideoById = asyncHandler(async (req, res) => {
-try {
+    try {
         const { videoId } = req.params
         if (!mongoose.Types.ObjectId.isValid(videoId)) {
             return res.status(400).json({ error: 'Invalid videoId' });
@@ -72,13 +72,13 @@ try {
         res.status(200).json(
             new ApiResponse(200, video, "success")
         )
-} catch (error) {
-    if(error instanceof ApiError){
-        throw error
-    }else{
-        throw new ApiError(500, "Error while fetching the video from server");
+    } catch (error) {
+        if (error instanceof ApiError) {
+            throw error
+        } else {
+            throw new ApiError(500, "Error while fetching the video from server");
+        }
     }
-}
     //TODO: get video by id
     // get user information with it
     // user info like avatar, username like subscribe button subs count -- from video view comment
@@ -117,6 +117,7 @@ try {
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: update video details like title, description, thumbnail
+    // next task
 
 })
 
