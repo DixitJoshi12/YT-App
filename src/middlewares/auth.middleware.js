@@ -8,6 +8,7 @@ import { User } from "../models/user.model.js";
 const jwtValidator = asyncHandler(async(req,_,next)=>{
 try {
         const accessToken = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","");
+        // console.log(accessToken)
         if(!accessToken){
             throw new ApiError(401,"Unauthorized!");
         }
@@ -20,6 +21,7 @@ try {
        if(!user){
         throw new ApiError(401,"Invalid Access Token");
        }
+    //    console.log(user)
        req.user = user;
         next();
 } catch (error) {
