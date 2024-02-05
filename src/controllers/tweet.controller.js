@@ -64,7 +64,9 @@ const updateTweet = asyncHandler(async (req, res) => {
             owner: userId
         },
         {
-            content
+            $set : {
+                content
+            }
         },
         {
             new: true
