@@ -11,6 +11,46 @@ import { uploadOnCloudinary, deleteOnCloudinary } from "../utils/cloudinary.js"
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
     //TODO: get all videos based on query, sort, pagination
+
+    const pipeline = [];
+
+    // Match stage to filter based on userId or other conditions
+    if (userId) {
+        pipeline.push({ $match: { owner: new mongoose.Types.ObjectId(userId) } });
+    }
+    // Add a query stage to match videos based on a search query
+    if (query) {
+        const searchStage = {
+            $match: {
+                $or: [
+                    { title: { $regex: query, $options: 'i' } }, // Case-insensitive title search
+                    { description: { $regex: query, $options: 'i' } }, // Case-insensitive description search
+                ],
+            },
+        };
+        pipeline.push(searchStage);
+    }
+    // Add additional stages based on your requirements (sorting, filtering, etc.)
+    // For example, sorting
+    if (sortBy && sortType) {
+        const sortStage = { $sort: { [sortBy]: sortType === 'asc' ? 1 : -1 } };
+        pipeline.push(sortStage);
+    }
+
+    // Add a pagination stage
+    const skip = (page - 1) * limit;
+    const paginationStage = { $skip: skip };
+    pipeline.push(paginationStage);
+    pipeline.push({ $limit: parseInt(limit) });
+
+    try {
+        // Execute aggregation pipeline
+        const result = await Video.aggregatePaginate(Video.aggregate(pipeline));
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error fetching videos:', error);
+        throw new ApiError(500, 'Something went wrong');
+    }
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
@@ -115,7 +155,7 @@ const getVideoById = asyncHandler(async (req, res) => {
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
-try {
+    try {
         const { videoId } = req.params
         // below expression checks if videoId is a valid object id
         if (!mongoose.Types.ObjectId.isValid(videoId)) {
@@ -123,46 +163,46 @@ try {
         }
         //TODO: update video details like title, description, thumbnail
         const thumbnailLocalPath = req.file?.path;
-        if(!thumbnailLocalPath){
-            throw new ApiError(400,"thumbnail not found")
+        if (!thumbnailLocalPath) {
+            throw new ApiError(400, "thumbnail not found")
         }
         const user = req.user;
-        if(!user){
-            throw new ApiError(400,"user not found!")
+        if (!user) {
+            throw new ApiError(400, "user not found!")
         }
         const video = await Video.findById(videoId);
-        if(video.owner.toString() !== user._id.toString()){
-            throw new ApiError(400,`user don't have permission to update this video`)
-        }  
+        if (video.owner.toString() !== user._id.toString()) {
+            throw new ApiError(400, `user don't have permission to update this video`)
+        }
         const thumbnail = await uploadOnCloudinary(thumbnailLocalPath)
-        const {title,description} = req.body;
+        const { title, description } = req.body;
         const updatedVideo = await Video.findByIdAndUpdate(
-             videoId,
-             {
-                $set : {
-                    thumbnail :  thumbnail.url,
+            videoId,
+            {
+                $set: {
+                    thumbnail: thumbnail.url,
                     title,
                     description
                 }
-             },
-             {
-                new : true
-             }
+            },
+            {
+                new: true
+            }
         )
-        if(!updatedVideo){
-            throw new ApiError(500,"Error while updating the video")
+        if (!updatedVideo) {
+            throw new ApiError(500, "Error while updating the video")
         }
 
         res.status(200).json(
-            new ApiResponse(200,updatedVideo,"Video successfully update")
+            new ApiResponse(200, updatedVideo, "Video successfully update")
         )
-} catch (error) {
-    if(error instanceof ApiError){
-        throw error
-    }else{
-        throw new ApiError(500,error?.message || "Something went wrong while updating the video")
+    } catch (error) {
+        if (error instanceof ApiError) {
+            throw error
+        } else {
+            throw new ApiError(500, error?.message || "Something went wrong while updating the video")
+        }
     }
-}
 
 })
 
@@ -176,15 +216,15 @@ const deleteVideo = asyncHandler(async (req, res) => {
         // commenting the below code because coludinary doesn't delete by url instead by public id
         //const {videoFile , thumbnail} = await Video.findById(videoId);
         */
-       // checking if the user is owner of this video
+        // checking if the user is owner of this video
         const user = req.user;
-        if(!user){
-            throw new ApiError(400,"user not found!")
+        if (!user) {
+            throw new ApiError(400, "user not found!")
         }
         const video = await Video.findById(videoId);
-        if(video.owner.toString() !== user._id.toString()){
-            throw new ApiError(400,`user don't have permission to update this video`)
-        }  
+        if (video.owner.toString() !== user._id.toString()) {
+            throw new ApiError(400, `user don't have permission to update this video`)
+        }
         // deleting the video
         const deletedVideo = await Video.findByIdAndDelete(videoId);
         if (!deletedVideo) {
@@ -207,14 +247,14 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
         if (!mongoose.Types.ObjectId.isValid(videoId)) {
             return res.status(400).json({ error: 'Invalid videoId' });
         }
-        // const user = req.user;
-        // if(!user){
-        //     throw new ApiError(400,"user not found!")
-        // }
+        const user = req.user;
+        if (!user) {
+            throw new ApiError(400, "user not found!")
+        }
         const currentVideo = await Video.findById(videoId);
-        // if(currentVideo.owner.toString() !== user._id.toString()){
-        //     throw new ApiError(400,`user don't have permission to update this video`)
-        // }  
+        if (currentVideo.owner.toString() !== user._id.toString()) {
+            throw new ApiError(400, `user don't have permission to update this video`)
+        }
         const video = await Video.findByIdAndUpdate(
             videoId,
             {

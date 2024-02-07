@@ -48,7 +48,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         }
     }
 })
-// follwing 3 needs to be tested
+
 const toggleCommentLike = asyncHandler(async (req, res) => {
     const { commentId } = req.params
     try {
@@ -56,7 +56,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
             throw new ApiError(400, "comment Id not found!");
         }
         const likedBy = req.user?._id;
-        if (!userId) {
+        if (!likedBy) {
             throw new ApiError(400, "user not found!");
         }
         const commentLike = await Like.findOne({ comment: commentId, likedBy });
@@ -92,7 +92,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
             throw new ApiError(400, "tweet Id not found!");
         }
         const likedBy = req.user?._id;
-        if (!userId) {
+        if (!likedBy) {
             throw new ApiError(400, "user not found!");
         }
         const tweetLike = await Like.findOne({ tweet: tweetId, likedBy });
@@ -112,7 +112,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
             }
             res.status(201)
                 .json(
-                    new ApiResponse(201, newTweetLike, "like of a comment is successful")
+                    new ApiResponse(201, newTweetLike, "like of a tweet is successful")
                 )
         }
     } catch (error) {
@@ -126,11 +126,11 @@ const getLikedVideos = asyncHandler(async (req, res) => {
     // get all the liked videos of the user
     // can use pagination for now just writing simple controller
     try {
-        const likeBy = req.user?._id;
-        if (!likeBy) {
+        const likedBy = req.user?._id;
+        if (!likedBy) {
             throw new ApiError(400, "user not found!");
         }
-        const likedVideos = await Like.find({ likeBy });
+        const likedVideos = await Like.find({ likedBy  });
         if (!likedVideos) {
             throw new ApiError(500, "something went wrong while getting all the liked videos")
         }
